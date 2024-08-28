@@ -47,20 +47,19 @@ import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Waterskin;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.EtherealChains;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfInvisibility;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLiquidFlame;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfMindVision;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfIdentify;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfLullaby;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMirrorImage;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRage;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
+import com.shatteredpixel.shatteredpixeldungeon.items.food.MeatPie;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.*;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfAccuracy;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
@@ -74,6 +73,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingSt
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.DeviceCompat;
 
+import java.lang.reflect.InvocationTargetException;
+
 public enum HeroClass {
 
 	WARRIOR( HeroSubClass.BERSERKER, HeroSubClass.GLADIATOR ),
@@ -81,6 +82,7 @@ public enum HeroClass {
 	ROGUE( HeroSubClass.ASSASSIN, HeroSubClass.FREERUNNER ),
 	HUNTRESS( HeroSubClass.SNIPER, HeroSubClass.WARDEN ),
 	DUELIST( HeroSubClass.CHAMPION, HeroSubClass.MONK );
+//	DOCTOR(  );
 
 	private HeroSubClass[] subClasses;
 
@@ -113,7 +115,8 @@ public enum HeroClass {
 				break;
 
 			case MAGE:
-				initMage( hero );
+//				initMage( hero );
+				initPowerfulMage( hero );
 				break;
 
 			case ROGUE:
@@ -127,6 +130,10 @@ public enum HeroClass {
 			case DUELIST:
 				initDuelist( hero );
 				break;
+
+//			case DOCTOR:
+//				initDoctor( hero );
+//				break;
 		}
 
 		if (SPDSettings.quickslotWaterskin()) {
@@ -226,6 +233,95 @@ public enum HeroClass {
 
 		new PotionOfStrength().identify();
 		new ScrollOfMirrorImage().identify();
+	}
+
+	private static void initDoctor( Hero hero ) {
+		MagesStaff staff;
+
+		staff = new MagesStaff(new WandOfMagicMissile());
+
+		(hero.belongings.weapon = staff).identify();
+		hero.belongings.weapon.activate(hero);
+
+		Dungeon.quickslot.setSlot(0, staff);
+
+		knowPotions();
+		knowScrolls();
+	}
+
+	private static void initPowerfulMage( Hero hero ) {
+		int lvl = 128;
+		MagesStaff staff = new MagesStaff(new WandOfMagicMissile());
+		RingOfEnergy ringE = new RingOfEnergy();
+		RingOfAccuracy ringA = new RingOfAccuracy();
+		Artifact artifact = new EtherealChains();
+		Item[] lvlItems = {staff, ringE, ringA, artifact, hero.belongings.armor};
+		for (Item it : lvlItems) {
+			it.level(lvl);
+		}
+		staff.updateWand(true);
+		staff.gainCharge(lvl, true);
+
+		(hero.belongings.weapon = staff).identify();
+		(hero.belongings.ring = ringE).identify();
+		(hero.belongings.artifact = artifact).identify();
+		hero.belongings.weapon.activate(hero);
+		hero.earnExp((int)1e8, hero.getClass());
+		hero.STR = lvl;
+
+		Dungeon.quickslot.setSlot(0, staff);
+
+		knowPotions();
+		knowScrolls();
+		final int count = lvl << 3; // 1024
+
+		Class<?>[] items = {
+				ScrollOfUpgrade.class, ScrollOfIdentify.class, ScrollOfMagicMapping.class, ScrollOfRemoveCurse.class,
+				PotionOfLiquidFlame.class, PotionOfFrost.class, PotionOfHaste.class, PotionOfHealing.class, PotionOfInvisibility.class,
+				MeatPie.class,
+		};
+		for (Class<?> item : items) {
+			try {
+				((Item)item.getDeclaredConstructor().newInstance()).quantity(count).collect();
+			} catch (InvocationTargetException | InstantiationException | IllegalAccessException |
+                     NoSuchMethodException ignored) {;
+            }
+        }
+
+		Dungeon.gold += count * count;
+		new PotionBandolier().collect();
+		new ScrollHolder().collect();
+		new MagicalHolster().collect();
+	}
+
+	private static void knowPotions() {
+		new PotionOfExperience().identify();
+		new PotionOfFrost().identify();
+		new PotionOfHaste().identify();
+		new PotionOfHealing().identify();
+		new PotionOfInvisibility().identify();
+		new PotionOfLevitation().identify();
+		new PotionOfLiquidFlame().identify();
+		new PotionOfMindVision().identify();
+		new PotionOfParalyticGas().identify();
+		new PotionOfPurity().identify();
+		new PotionOfStrength().identify();
+		new PotionOfToxicGas().identify();
+	}
+
+	private static void knowScrolls() {
+		new ScrollOfIdentify().identify();
+		new ScrollOfLullaby().identify();
+		new ScrollOfMagicMapping().identify();
+		new ScrollOfMirrorImage().identify();
+		new ScrollOfRage().identify();
+		new ScrollOfRecharging().identify();
+		new ScrollOfRemoveCurse().identify();
+		new ScrollOfRetribution().identify();
+		new ScrollOfTeleportation().identify();
+		new ScrollOfTerror().identify();
+		new ScrollOfTransmutation().identify();
+		new ScrollOfUpgrade().identify();
 	}
 
 	public String title() {

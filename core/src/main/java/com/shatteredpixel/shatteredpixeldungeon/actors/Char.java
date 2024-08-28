@@ -146,8 +146,8 @@ public abstract class Char extends Actor {
 	
 	public CharSprite sprite;
 	
-	public int HT;
-	public int HP;
+	public int HT; // max hit point
+	public int HP; // current hit point
 	
 	protected float baseSpeed	= 1;
 	protected PathFinder.Path path;

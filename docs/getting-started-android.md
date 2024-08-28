@@ -1,4 +1,9 @@
-(Last Updated December 2022)
+(Last Updated August 2024)
+
+## Quick setup
+
+- debug: `ANDOIR_HOME="" ./gradlew android:assembleDebug`
+- release: `ANDOIR_HOME="" ./gradlew android:assembleRelease`
 
 ## Prerequisites
 

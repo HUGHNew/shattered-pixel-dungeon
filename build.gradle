@@ -13,11 +13,12 @@ buildscript {
 allprojects {
 
     ext {
-        appName = 'Shattered Pixel Dungeon'
-        appPackageName = 'com.shatteredpixel.shatteredpixeldungeon'
+        appName = 'SPD-m'
+        appPackageName = 'top.hughnash.spd'
 
         appVersionCode = 782
-        appVersionName = '2.4.2'
+        // the appVersionCode seems be referred somewhere and will cause restore problem
+        appVersionName = '1.0.0.3'
 
         appJavaCompatibility = JavaVersion.VERSION_1_8
 
