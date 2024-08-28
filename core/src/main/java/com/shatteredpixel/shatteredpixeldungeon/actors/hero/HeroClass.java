@@ -59,7 +59,11 @@ import com.shatteredpixel.shatteredpixeldungeon.items.food.MeatPie;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfAccuracy;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.*;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.DamageWand;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfDisintegration;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
@@ -250,30 +254,34 @@ public enum HeroClass {
 	}
 
 	private static void initPowerfulMage( Hero hero ) {
-		int lvl = 128;
+		int magic = 128;
 		MagesStaff staff = new MagesStaff(new WandOfMagicMissile());
+		WandOfDisintegration wandM = new WandOfDisintegration(); // main weapon
+		WandOfBlastWave wandB = new WandOfBlastWave(); // secondary weapon
 		RingOfEnergy ringE = new RingOfEnergy();
 		RingOfAccuracy ringA = new RingOfAccuracy();
+		RingOfForce ringF = new RingOfForce();
 		Artifact artifact = new EtherealChains();
-		Item[] lvlItems = {staff, ringE, ringA, artifact, hero.belongings.armor};
-		for (Item it : lvlItems) {
-			it.level(lvl);
+
+		Item[] equipments = {ringE, ringA, ringF, artifact, wandB, wandM};
+		for (Item it : equipments) {
+			it.level(magic);
+			it.collect();
 		}
+		hero.belongings.armor.level(magic);
+		staff.level(magic);
 		staff.updateWand(true);
-		staff.gainCharge(lvl, true);
+		staff.gainCharge(magic, true);
 
 		(hero.belongings.weapon = staff).identify();
-		(hero.belongings.ring = ringE).identify();
-		(hero.belongings.artifact = artifact).identify();
 		hero.belongings.weapon.activate(hero);
-		hero.earnExp((int)1e8, hero.getClass());
-		hero.STR = lvl;
+		hero.earnExp((int)1e9, hero.getClass());
+		hero.STR = magic << 3; // 1024
 
 		Dungeon.quickslot.setSlot(0, staff);
 
 		knowPotions();
 		knowScrolls();
-		final int count = lvl << 3; // 1024
 
 		Class<?>[] items = {
 				ScrollOfUpgrade.class, ScrollOfIdentify.class, ScrollOfMagicMapping.class, ScrollOfRemoveCurse.class,
@@ -282,13 +290,13 @@ public enum HeroClass {
 		};
 		for (Class<?> item : items) {
 			try {
-				((Item)item.getDeclaredConstructor().newInstance()).quantity(count).collect();
+				((Item)item.getDeclaredConstructor().newInstance()).quantity(magic).collect();
 			} catch (InvocationTargetException | InstantiationException | IllegalAccessException |
                      NoSuchMethodException ignored) {;
             }
         }
 
-		Dungeon.gold += count * count;
+		Dungeon.gold += magic << 16; // 2 ^ (7 + 16)
 		new PotionBandolier().collect();
 		new ScrollHolder().collect();
 		new MagicalHolster().collect();
